@@ -193,7 +193,7 @@ def format_auction(auction: List[str]) -> str:
 def build_auction_table(deal: dict, width: int = 350) -> str:
     header = format_auction_header(deal)
     auction = format_auction((format_auction_calls(deal["Auction"], deal["Dealer"])))
-    return f'</br><table align="center" border="0" cellpadding="0" cellspacing="0" style="width: {width}px;">\n<tbody>\n' + \
+    return f'<br/><table align="center" border="0" cellpadding="0" cellspacing="0" style="width: {width}px;">\n<tbody>\n' + \
         header + \
         auction + \
         '</tbody></table>'
