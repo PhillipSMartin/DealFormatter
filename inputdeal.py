@@ -2,23 +2,24 @@
 # -*- coding: utf-8 -*-
 """
 The input method of this module asks for input from the user and returns a dictionary with deal info in the following format:
-    {
-        "Board number": <integer>
-        "Dealer": <"North", "South", "East", or "West" >
-        "Auction": <a list of calls eg. ['1C', 'D', 'R', '3N', 'P', 'P', 'P'] >
-        "Seats": [ 
-                    { "Player": <player's name>',
-                      "Direction":  <"North", "South", "East", or "West" >
-                        "Hand": 
-                            { "Spades": <string, using AKQJT for honors>
-                              "Hearts": <string, using AKQJT for honors>
-                              "Diamonds": <string, using AKQJT for honors>
-                              "Clubs": <string, using AKQJT for honors>
-                            }
-                    },
-                    ...
-                ]
-      }
+        {
+                "Board number": <integer>,
+                "Dealer": <"North", "South", "East", or "West" >,
+                "Auction": <a list of calls eg. ['1C', 'D', 'R', '3N', 'P', 'P', 'P'] >,
+                "Seats": [ 
+                                        { "Player": <player's name>,
+                                            "Direction":  <"North", "South", "East", or "West" >,
+                                                "Hand": 
+                                                        { "Spades": <string, using AKQJT for honors>,
+                                                            "Hearts": <string, using AKQJT for honors>,
+                                                            "Diamonds": <string, using AKQJT for honors>,
+                                                            "Clubs": <string, using AKQJT for honors>
+                                                        }
+                                        },
+                                        ...
+                                ],
+                "Play": <a list of cards played, e.g. ["CK", "C8"]>
+            }
 """
 import globals
 
@@ -43,26 +44,36 @@ def inputAuction() -> List[str]:
     return(input("Enter auction (S, H, D, C, N, P, D, R), comma delimited: ").upper().split(','))
 
 
+def inputPlay() -> list:
+    play_input = input("Enter play as a comma-separated list of cards (e.g. CK,C8): ").strip()
+    if len(play_input) > 0:
+        return [card.strip().upper() for card in play_input.split(',') if card.strip()]
+    return []
+
 def inputDeal() -> dict:
     deal = {}
-    
+
     boardNumber = input("Board number (or blank): ")
     if len(boardNumber) > 0:
         deal["Board number"] = int(boardNumber)
-        
+
     dealer = input("Dealer (N, S, E, W): ")
     if len(dealer) > 0:
         deal["Dealer"] = globals.seats[dealer.upper()]
-        
+
     hands = inputHands()
     if len(hands) > 0:
         deal["Seats"] = hands
-        
+
     auction = inputAuction()
     if len(auction) > 0:
         deal["Auction"] = auction
-        
-    return deal;
+
+    play = inputPlay()
+    if len(play) > 0:
+        deal["Play"] = play
+
+    return deal
         
     
         

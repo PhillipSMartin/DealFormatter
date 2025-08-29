@@ -1,23 +1,24 @@
 # -*- coding: utf-8 -*-
 """
 The build method of this module takes as input a dictionary describing a deal in the following format:
-    {
-        "Board number": <integer>
-        "Dealer": <"North", "South", "East", or "West" >
-        "Auction": <a list of calls e.g. ['1C', 'D', 'R', '3N', 'P', 'P', 'P'] >
-        "Seats": [ 
-                    { "Player": <player's name>',
-                      "Direction":  <"North", "South", "East", or "West" >
-                        "Hand": 
-                            { "Spades": <string, using AKQJT for honors>
-                              "Hearts": <string, using AKQJT for honors>
-                              "Diamonds": <string, using AKQJT for honors>
-                              "Clubs": <string, using AKQJT for honors>
-                            }
-                    },
-                    ...
-                ]
-      }
+        {
+                "Board number": <integer>,
+                "Dealer": <"North", "South", "East", or "West" >,
+                "Auction": <a list of calls eg. ['1C', 'D', 'R', '3N', 'P', 'P', 'P'] >,
+                "Seats": [ 
+                                        { "Player": <player's name>,
+                                            "Direction":  <"North", "South", "East", or "West" >,
+                                                "Hand": 
+                                                        { "Spades": <string, using AKQJT for honors>,
+                                                            "Hearts": <string, using AKQJT for honors>,
+                                                            "Diamonds": <string, using AKQJT for honors>,
+                                                            "Clubs": <string, using AKQJT for honors>
+                                                        }
+                                        },
+                                        ...
+                                ],
+                "Play": <a list of cards played, e.g. ["CK", "C8"]>
+            }
         
     it outputs an html string, displaying the deal in a variety of formats
     as specified by the options string
@@ -26,7 +27,7 @@ The build method of this module takes as input a dictionary describing a deal in
     if it contains only one of SWNE, that hand is formatted on a single line
     if it contains more than one of SWNE, all the specified hands are formatted in a diagram
     
-    if in contains A, the auction is formatted below the diagram
+    if it contains A, the auction is formatted below the diagram
     
     if r is specified, the deal is shifted clockwise that number of positions (and directions are reassigned before formatting)
 """

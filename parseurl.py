@@ -1,23 +1,24 @@
 # -*- coding: utf-8 -*-
 """
 The parse method of this module takes a BBO handviewer url, parses it, and returns a dictionary with deal info in the following format:
-    {
-        "Board number": <integer>
-        "Dealer": <"North", "South", "East", or "West" >
-        "Auction": <a list of calls e.g. ['1C', 'D', 'R', '3N', 'P', 'P', 'P'] >
-        "Seats": [ 
-                    { "Player": <player's name>',
-                      "Direction":  <"North", "South", "East", or "West" >
-                        "Hand": 
-                            { "Spades": <string, using AKQJT for honors>
-                              "Hearts": <string, using AKQJT for honors>
-                              "Diamonds": <string, using AKQJT for honors>
-                              "Clubs": <string, using AKQJT for honors>
-                            }
-                    },
-                    ...
-                ]
-      }
+        {
+                "Board number": <integer>,
+                "Dealer": <"North", "South", "East", or "West" >,
+                "Auction": <a list of calls e.g. ['1C', 'D', 'R', '3N', 'P', 'P', 'P'] >,
+                "Seats": [ 
+                                        { "Player": <player's name>,
+                                            "Direction":  <"North", "South", "East", or "West" >,
+                                                "Hand": 
+                                                        { "Spades": <string, using AKQJT for honors>,
+                                                            "Hearts": <string, using AKQJT for honors>,
+                                                            "Diamonds": <string, using AKQJT for honors>,
+                                                            "Clubs": <string, using AKQJT for honors>
+                                                        }
+                                        },
+                                        ...
+                                ],
+                "Play": <a list of cards played, e.g. ["CK", "C8"]>
+            }
 """
 
 import globals
@@ -80,20 +81,23 @@ def parse(url: str) -> dict:
     dealer = extract_dealer(hands[0])
     players = extract_players(url)
     auction = extract_auction(url)
-    
+
+    # Extract played cards from url
+    play_cards = re.findall(r"pc\|([^|]+)\|", url)
+
     # combine players names, directions, and hands into a list of tuples
-    # example of an item in the list: ('PSMartin', 'South', {'Spades': 'T5', 'Hearts': 'AJ7', 'Diamonds': 'KQJ2', 'Clubs': 'AJT6'})
     directions_south_first = globals.directions[globals.directions.index('South'):] + globals.directions[:globals.directions.index('South')]
     hands_zip = zip(players, directions_south_first, [globals.build_hand(split_suits(hand)) for hand in hands])
-    
+
     # convert list of tuples into a list of dictionaries
     hands_list = [dict(zip(["Player", "Direction", "Hand"], item)) for item in hands_zip]
-    
+
     # combine all the above into a single dictionary
     return  { "Board number" : board_number,
                  "Dealer" : globals.directions[dealer],
                  "Auction" : auction,
-                 "Seats" : hands_list
+                 "Seats" : hands_list,
+                 "Play" : play_cards
              }
  
 # for testing          
