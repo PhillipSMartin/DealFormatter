@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+import constants
+
 """
 The build method of this module takes as input a dictionary describing a deal in the following format:
         {
@@ -158,184 +159,65 @@ def format_auction_calls(auction: List[str], dealer: str) -> list:
 def format_auction_header(deal: dict) -> str:
     # construct auction heading from list of players (West first)
     # input: each player's name can be found in deal[direction]["PLayer"]
-    # output: 
-    # <tr>
-    #    <td align="left" width="25%"><b>West</b></td>
-    #    <td align="left" width="25%"><b>North</b></td>
-    #    <td align="left" width="25%"><b>East</b></td>
-    #    <td align="left" width="25%"><b>South</b></td>
-    # </tr>
-    # <tr>
-    #    <td align="left" width="25%"><i>Robot</i></td>
-    #    <td align="left" width="25%"><i>Robot</i></td>
-    #    <td align="left" width="25%"><i>Robot</i></td>
-    #    <td align="left" width="25%"><i>Phillip</i></td>
-    # </tr>
+
     players = dict([(seat['Direction'], seat.get('Player', '')) for seat in deal['Seats']])
-    auction_header = '<tr>\n'
+    auction_header = '    <tr>\n'
     for direction in globals.directions:
-        auction_header += f'   <td align="direction in globals.directions:left" width="25%"><b>{direction}</b></td>\n'
-    auction_header += '</tr>\n<tr>\n'
+        auction_header += constants.AUCTION_DIRECTIONS_TEMPLATE.format(direction=direction)
+    auction_header += '    </tr>\n    <tr>\n'
     for direction in globals.directions:
-        auction_header += f'   <td align="left" width="25%"><i>{players[direction]}</i></td>\n'
-    return auction_header + '</tr>\n'
+        auction_header += constants.AUCTION_NAMES_TEMPLATE.format(name=players[direction])
+    return auction_header + '    </tr>'
     
     
 def format_auction(auction: List[str]) -> str:
     # take output of formatAuctionCalls and format it into html table rows
-    # output: 
-    # <tr>
-    #    <td align="left" width="25%"> <br /></td>
-    #    <td align="left" width="25%">1 ♣</td>
-    #    <td align="left" width="25%">Pass</td>
-    #    <td align="left" width="25%">2 ♣</td>
-    # </tr>
-    # <tr>
-    #    <td align="left" width="25%">Pass</td>
-    #    <td align="left" width="25%">2 ♠</td>
-    #    <td align="left" width="25%">Pass</td>
-    #    <td align="left" width="25%">3 NT</td>
-    # </tr>
-    # <tr>
-    #    <td align="left" width="25%">Pass</td>
-    #    <td align="left" width="25%">Pass</td>
-    #    <td align="left" width="25%">Pass</td>
-    #    <td align="left" width="25%"> <br /></td>
-    # </tr>
     
     # extend auction to make length a multiple of four
     auction.extend([' '] * (4 - len(auction) % 4))
     
     # build rows
-    new_auction = ''
+    auction_html = ''
     for i in range(len(auction)):
         if 0 == i % 4:
-            new_auction += '<tr>\n'
-        new_auction += f'   <td align="left" width="25%">{auction[i]}</td>\n'
+            auction_html += '    <tr>\n'
+        auction_html += constants.CALL_TEMPLATE.format(call=auction[i])
         if 3 == i % 4:
-            new_auction += '</tr>\n'
-    return new_auction
+            auction_html += '    </tr>\n'
+    return auction_html
 
 def build_auction_table(deal: dict, width: int = 350) -> str:
     header = format_auction_header(deal)
     auction = format_auction((format_auction_calls(deal["Auction"], deal["Dealer"])))
-    return f'<br/><table align="center" border="0" cellpadding="0" cellspacing="0" style="width: {width}px;padding-left: 30">\n<tbody>\n' + \
-        header + \
-        auction + \
-        '</tbody></table>'
+    return constants.AUCTION_TEMPLATE.format(width=width, header=header, auction=auction)
+
+def build_card_table(deal: dict, args) -> str:
+    return constants.TABLE_TEMPLATE
 
 def build_hand_table(deal: dict, args) -> str:
     # build html to display deal
     hands = format_hand_diagrams(deal["Seats"], args=args, deal=deal)
-    table = """<div align="center" class="bridge-diagram">
-  <table>
-    <colgroup>
-      <col class="col-left" />
-      <col class="col-center" />
-      <col class="col-right" />
-    </colgroup>
-    <tbody>\n"""
+    table = constants.TABLE_INTRO
 
     if args.north:
-        table += """      <tr>
-        <td></td>
-        <td class = "hand center-hand">\n"""
-        table += hands["North"]
-        table += """        </td>
-        <td></td>    
-      </tr>\n"""
+        table += constants.CENTER_HAND_TEMPLATE.format(hand=hands["North"])
 
-    if True:   
-        table += """      <tr>
-        <td class="hand hand-west">\n"""
-        table += hands["West"] if args.west else '' 
-        table += '          <br />\n' if args.south else '\n'
-        table += """        </td>
-        <td class="table-cell">
-          <div class="felt">
-          </div>
-        </td>
-        <td class="hand hand-east">\n"""
-        table += hands["East"] if args.east else ''
-        table += '          <br />\n' if args.south else '\n'
-        table += """        </td> 
-      </tr>\n"""
-        
+    table += constants.WEST_HAND_TEMPLATE.format(hand=hands["West"] if args.west else '')       
+    table += build_card_table(deal, args)
+    table += constants.EAST_HAND_TEMPLATE.format(hand=hands["East"] if args.east else '')
+      
     if args.south:
-        table += """      <tr>
-        <td></td>
-        <td class = "hand center-hand">\n"""
-        table += hands["South"]
-        table += """        </td>
-        <td></td>    
-      </tr>\n"""
-        # table += '   <tr>\n'  + \
-        #     '      <td align="left" width="125"><br /></td>\n' + \
-        #     '      <td align="left" width="125">' + hands["South"] + '</td>\n' + \
-        #     '      <td align="left" width="125"><br /></td>\n' + \
-        #     '   </tr>\n'
-    table += "    </tbody>\n  </table>\n</div>\n"
+        table += constants.CENTER_HAND_TEMPLATE.format(hand=hands["South"])
+
+    table += constants.TABLE_OUTRO
     return table
             
 def build_single_hand(hand: Dict[str, str], args=None, deal=None) -> str:
     hand_html = format_hand(hand, args=args, deal=deal, with_breaks=False)
-    return f'<TABLE width="300" border="0" cellspacing="0" cellpadding="0" align="center"><TR><TD WIDTH="100%" Align="center">{hand_html}</TR></TABLE>'
+    return constants.HORIZONTAL_HAND_TEMPLATE.format(hand_html=hand_html)
  
-def build(deal : dict, args) -> str:
-    
-    html = """<style>
-    .bridge-diagram {
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Color Emoji", "Segoe UI Emoji";
-      /* Adjust these to fine-tune layout */
-      --col-center: 145px; /* width of middle column */
-      --felt-w:    120px;  /* width of green felt */
-    }
-
-    /* Let columns size from content; center column stays fixed via colgroup */
-    .bridge-diagram table { border-collapse: collapse; margin: 0 auto; table-layout: auto; }
-    .bridge-diagram td { vertical-align: top; padding: 0 .5rem; width: auto; }
-
-    /* Column widths: left/right auto; center fixed */
-    .bridge-diagram .col-center { width: var(--col-center); }
-
-    /* Keep NORTH/SOUTH text left-aligned, but center the whole block under the felt.
-       Uses max() to avoid negative padding if felt > center width. */
-    .bridge-diagram .center-hand {
-      text-align: left;
-      padding-left: 30;
-    }
-
-    /* Vertically center the felt row so it's equidistant from NORTH/SOUTH */
-    .bridge-diagram tbody tr:nth-child(2) td { vertical-align: middle; }
-
-    /* Felt + played cards */
-    .bridge-diagram .table-cell { text-align:center; }
-    .bridge-diagram .felt {
-      position: relative; width: var(--felt-w); height: 80px; margin: 8px auto; background: #215b33; border-radius: 12px;
-      box-shadow: inset 0 0 0 3px #134022, inset 0 0 30px rgba(0,0,0,.35);
-    }
-    .bridge-diagram .card {
-      position: absolute; background: #fff; border-radius: 6px; border: 1px solid #d9d9d9; padding: 2px 6px;
-      font-size: 14px; font-weight: 700; line-height: 1; box-shadow: 0 2px 8px rgba(0,0,0,.18);
-    }
-    .bridge-diagram .north { top: 4px; left: 50%; transform: translateX(-50%); }
-    .bridge-diagram .south { bottom: 4px; left: 50%; transform: translateX(-50%); }
-    .bridge-diagram .west  { left: 4px; top: 50%; transform: translateY(-50%); }
-    .bridge-diagram .east  { right: 4px; top: 50%; transform: translateY(-50%); }
-
-    /* Suit coloring */
-    .bridge-diagram .red { color:#c01616; }
-
-    /* Hand formatting */
-    .bridge-diagram .hand-title { font-weight: 700; }
-    .bridge-diagram .name { font-style: italic; }
-    .bridge-diagram .hand-west { 
-      text-align: left; 
-      white-space: nowrap;      /*  ensures column width equals the longest WEST line */
-      padding-right: .2rem;    /* small margin beyond longest line */
-    }
-    .bridge-diagram .hand-east { text-align:left; }
-</style>\n"""
+def build(deal : dict, args) -> str:   
+    html = constants.STYLE
     
     # rotate deal if necessary
     if args.rotate:
