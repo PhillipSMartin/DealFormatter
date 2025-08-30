@@ -61,7 +61,7 @@ def format_suit(suit: str) -> str:
     # output: ' A J 10 6'
     return ' '.join(suit).replace('T','10') or '--'
 
-def format_hand(hand: Dict[str, str], with_breaks: bool = True) -> str:
+def format_hand(hand: Dict[str, str], with_breaks: bool = True, indent: int = 0) -> str:
     # convert dictionary of holdings by suit into an html string displaying the hand
     # input:  {'Spades': 'T5', 'Hearts': 'AJ7', 'Diamonds': 'KQJ2', 'Clubs': 'AJT6'}
     # output: 
@@ -71,7 +71,7 @@ def format_hand(hand: Dict[str, str], with_breaks: bool = True) -> str:
     #     &#9827; A J 10 6<br />'
 
     br = '<br />\n' if with_breaks else '&nbsp;&nbsp;'
-    suit_str = [pip + ' ' + format_suit(hand[suit]) for pip, suit in zip(pips.values(), globals.suits)]
+    suit_str = [(' ' * indent) + pip + ' ' + format_suit(hand[suit]) for pip, suit in zip(pips.values(), globals.suits)]
     return br.join(suit_str) + br
 
 def format_hand_diagram(hand_info: dict) -> str:
@@ -85,12 +85,12 @@ def format_hand_diagram(hand_info: dict) -> str:
     #   <span style="color: #c01616;">♦</span> 10 3<br />
     #   ♣ 6<br />
     # 
-    
-    diagram =  f'{hand_info["Direction"].upper()}<br />\n'
+    diagram = f'          <div class="hand-title">{hand_info["Direction"].upper()}</div>\n'
+    #diagram =  f'{hand_info["Direction"].upper()}<br />\n'
     if "Player" in hand_info:
-        diagram += f'<i>{hand_info["Player"]}</i><br />\n'
+        diagram += f'          <div class="name">{hand_info["Player"]}</div>\n'
     if "Hand" in hand_info:
-        diagram += f'{format_hand(hand_info["Hand"])}\n'
+        diagram += f'{format_hand(hand_info["Hand"], indent=10)}'
     return diagram
     
     
@@ -194,43 +194,122 @@ def format_auction(auction: List[str]) -> str:
 def build_auction_table(deal: dict, width: int = 350) -> str:
     header = format_auction_header(deal)
     auction = format_auction((format_auction_calls(deal["Auction"], deal["Dealer"])))
-    return f'<br/><table align="center" border="0" cellpadding="0" cellspacing="0" style="width: {width}px;">\n<tbody>\n' + \
+    return f'<br/><table align="center" border="0" cellpadding="0" cellspacing="0" style="width: {width}px;padding-left: 30">\n<tbody>\n' + \
         header + \
         auction + \
         '</tbody></table>'
- 
+
 def build_hand_table(deal: dict, args) -> str:
     # build html to display deal
     hands = format_hand_diagrams(deal["Seats"])
-    table = '<div align="center"><table><tbody>\n'
+    table = """<div align="center" class="bridge-diagram">
+  <table>
+    <colgroup>
+      <col class="col-left" />
+      <col class="col-center" />
+      <col class="col-right" />
+    </colgroup>
+    <tbody>\n"""
+
     if args.north:
-        table += '   <tr>\n'  + \
-            '      <td align="left" width="125"><br /></td>\n' + \
-            '      <td align="left" width="125">' + (hands["North"] if args.north else '') + '<br /></td>\n' + \
-            '      <td align="left" width="125"><br /></td>\n' + \
-            '   </tr>\n'
-    if args.east or args.west:
-        table += '   <tr>\n'  + \
-            '      <td align="left" width="125">' + (hands["West"] if args.west else '') + ('<br />' if args.south else '') + '</td>\n' + \
-            '      <td align="left" width="125"><br /></td>\n' + \
-            '      <td align="left" width="125">' + (hands["East"] if args.east else '') + ('<br />' if args.south else '') + '</td>\n' + \
-            '   </tr>\n'
+        table += """      <tr>
+        <td></td>
+        <td class = "hand center-hand">\n"""
+        table += hands["North"]
+        table += """        </td>
+        <td></td>    
+      </tr>\n"""
+
+    if True:   
+        table += """      <tr>
+        <td class="hand hand-west">\n"""
+        table += hands["West"] if args.west else '' 
+        table += '          <br />\n' if args.south else '\n'
+        table += """        </td>
+        <td class="table-cell">
+          <div class="felt">
+          </div>
+        </td>
+        <td class="hand hand-east">\n"""
+        table += hands["East"] if args.east else ''
+        table += '          <br />\n' if args.south else '\n'
+        table += """        </td> 
+      </tr>\n"""
+        
     if args.south:
-        table += '   <tr>\n'  + \
-            '      <td align="left" width="125"><br /></td>\n' + \
-            '      <td align="left" width="125">' + hands["South"] + '</td>\n' + \
-            '      <td align="left" width="125"><br /></td>\n' + \
-            '   </tr>\n'
-    table += '</tbody></table></div>\n'
+        table += """      <tr>
+        <td></td>
+        <td class = "hand center-hand">\n"""
+        table += hands["South"]
+        table += """        </td>
+        <td></td>    
+      </tr>\n"""
+        # table += '   <tr>\n'  + \
+        #     '      <td align="left" width="125"><br /></td>\n' + \
+        #     '      <td align="left" width="125">' + hands["South"] + '</td>\n' + \
+        #     '      <td align="left" width="125"><br /></td>\n' + \
+        #     '   </tr>\n'
+    table += "    </tbody>\n  </table>\n</div>\n"
     return table
             
 def build_single_hand(hand: str) -> str:
     return f'<TABLE width="300" border="0" cellspacing="0" cellpadding="0" align="center"><TR><TD WIDTH="100%" Align="center">{hand}</TR></TABLE>'
-        
-    
+ 
 def build(deal : dict, args) -> str:
     
-    html = ''
+    html = """<style>
+    .bridge-diagram {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Color Emoji", "Segoe UI Emoji";
+      /* Adjust these to fine-tune layout */
+      --col-center: 145px; /* width of middle column */
+      --felt-w:    120px;  /* width of green felt */
+    }
+
+    /* Let columns size from content; center column stays fixed via colgroup */
+    .bridge-diagram table { border-collapse: collapse; margin: 0 auto; table-layout: auto; }
+    .bridge-diagram td { vertical-align: top; padding: 0 .5rem; width: auto; }
+
+    /* Column widths: left/right auto; center fixed */
+    .bridge-diagram .col-center { width: var(--col-center); }
+
+    /* Keep NORTH/SOUTH text left-aligned, but center the whole block under the felt.
+       Uses max() to avoid negative padding if felt > center width. */
+    .bridge-diagram .center-hand {
+      text-align: left;
+      padding-left: 30;
+    }
+
+    /* Vertically center the felt row so it's equidistant from NORTH/SOUTH */
+    .bridge-diagram tbody tr:nth-child(2) td { vertical-align: middle; }
+
+    /* Felt + played cards */
+    .bridge-diagram .table-cell { text-align:center; }
+    .bridge-diagram .felt {
+      position: relative; width: var(--felt-w); height: 80px; margin: 8px auto; background: #215b33; border-radius: 12px;
+      box-shadow: inset 0 0 0 3px #134022, inset 0 0 30px rgba(0,0,0,.35);
+    }
+    .bridge-diagram .card {
+      position: absolute; background: #fff; border-radius: 6px; border: 1px solid #d9d9d9; padding: 2px 6px;
+      font-size: 14px; font-weight: 700; line-height: 1; box-shadow: 0 2px 8px rgba(0,0,0,.18);
+    }
+    .bridge-diagram .north { top: 4px; left: 50%; transform: translateX(-50%); }
+    .bridge-diagram .south { bottom: 4px; left: 50%; transform: translateX(-50%); }
+    .bridge-diagram .west  { left: 4px; top: 50%; transform: translateY(-50%); }
+    .bridge-diagram .east  { right: 4px; top: 50%; transform: translateY(-50%); }
+
+    /* Suit coloring */
+    .bridge-diagram .red { color:#c01616; }
+
+    /* Hand formatting */
+    .bridge-diagram .hand-title { font-weight: 700; }
+    .bridge-diagram .name { font-style: italic; }
+    .bridge-diagram .hand-west { 
+      text-align: left; 
+      white-space: nowrap;      /*  ensures column width equals the longest WEST line */
+      padding-right: .2rem;    /* small margin beyond longest line */
+    }
+    .bridge-diagram .hand-east { text-align:left; }
+</style>\n"""
     
     # rotate deal if necessary
     if args.rotate:
@@ -245,39 +324,21 @@ def build(deal : dict, args) -> str:
                  break
     
     elif len(seats_to_show) > 1:
-        html = build_hand_table(deal, args)
+        html += build_hand_table(deal, args)
         
     # if specified, add auction
     if args.auction:
         html += build_auction_table(deal)
         
-    return html
+    return html    
 
-    
-
-# for testing
 if __name__ == '__main__' :
-   
-    sampleDeal = {"Seats": [{"Direction": "West", "Hand": {"Spades": "K6", "Hearts": "8643", "Diamonds": "Q954", "Clubs": "Q96"}}, {"Direction": "North"}, {"Direction": "East", "Hand": {"Spades": "AJT743", "Hearts": "", "Diamonds": "7", "Clubs": "AKJT84"}}, {"Direction": "South"}], "Auction": [""]}
-    result = build(sampleDeal, 'EW')
-    """
-    sampleDeal = {'Dealer': 'West',
- 'Seats': [{'Direction': 'West'},
-  {'Direction': 'North', 
-   'Hand': {'Spades': 'K7542',
-    'Hearts': 'K752',
-    'Diamonds': 'J6',
-    'Clubs': 'Q4'}},
-  {'Direction': 'East',
-   'Hand': {'Spades': 'A6',
-    'Hearts': 'AT6',
-    'Diamonds': 'QT842',
-    'Clubs': 'AT9'}},
-  {'Direction': 'South'}],
- 'Auction': ['P', 'P', '1D', '1S', 'D', '3S']}
-    result = build(sampleDeal, 'NEA')
-     """
-    print (result)
+    import main
+    sampleDeal = {"Board number": 8, "Dealer": "West", "Auction": ["1S", "P", "1N", "2H", "2S", "P", "P", "3C", "P", "3H", "D", "P", "P", "P"], "Seats": [{"Player": "psmartin", "Direction": "South", "Hand": {"Spades": "2", "Hearts": "AK876", "Diamonds": "Q2", "Clubs": "KQ642"}}, {"Player": "Robot", "Direction": "West", "Hand": {"Spades": "AKQJ95", "Hearts": "5", "Diamonds": "74", "Clubs": "A975"}}, {"Player": "Robot", "Direction": "North", "Hand": {"Spades": "873", "Hearts": "Q4", "Diamonds": "KJT953", "Clubs": "J8"}}, {"Player": "Robot", "Direction": "East", "Hand": {"Spades": "T64", "Hearts": "JT932", "Diamonds": "A86", "Clubs": "T3"}}]}
+    args = main.parse_args(['dummyinput', '-nsa'])
+    result = build(sampleDeal, args)
+    with open('test.html', 'w') as f:
+        f.write(result)
 
  
 
