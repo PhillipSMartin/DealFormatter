@@ -55,7 +55,7 @@ STYLE = """\
 
 HORIZONTAL_HAND_TEMPLATE = '<TABLE width="300" border="0" cellspacing="0" cellpadding="0" align="center"><TR><TD WIDTH="100%" Align="center">{hand_html}</TR></TABLE>'
 
-TABLE_INTRO = """\
+DIAGRAM_INTRO = """\
 <div align="center" class="bridge-diagram">
   <table>
     <colgroup>
@@ -64,7 +64,7 @@ TABLE_INTRO = """\
       <col class="col-right" />
     </colgroup>
     <tbody>\n"""
-TABLE_OUTRO = "    </tbody>\n  </table>\n</div>\n"
+DIAGRAM_OUTRO = "    </tbody>\n  </table>\n</div>\n"
 
 CENTER_HAND_TEMPLATE = """\
       <tr>
@@ -109,3 +109,22 @@ AUCTION_TEMPLATE = """\
 
 CALL_TEMPLATE="""\
       <td align="left" width="25%">{call}</td>\n"""
+
+CARD_TABLE_INTRO = """\
+        <td class="table-cell">
+          <div class="felt">\n"""
+
+CARD_TABLE_ENTRY_TEMPLATE = """\
+            <div class="card {direction}">{pip} {rank}</div>\n"""
+
+CARD_TABLE_OUTRO = """\
+          </div>
+        </td>\n"""
+
+HAND_DIRECTION_TEMPLATE = """\
+          <div class="hand-title">{direction}</div>\n"""
+
+HAND_NAME_TEMPLATE = """\
+          <div class="name">{name}</div>\n"""
+ 
+

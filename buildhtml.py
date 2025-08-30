@@ -111,10 +111,10 @@ def format_hand_diagram(hand_info: dict, args=None, deal=None) -> str:
     #   <span style="color: #c01616;">♦</span> 10 3<br />
     #   ♣ 6<br />
     # 
-    diagram = f'          <div class="hand-title">{hand_info["Direction"].upper()}</div>\n'
-    #diagram =  f'{hand_info["Direction"].upper()}<br />\n'
+    diagram = constants.HAND_DIRECTION_TEMPLATE.format(direction=hand_info["Direction"].upper())
+    # diagram = f'          <div class="hand-title">{hand_info["Direction"].upper()}</div>\n'
     if "Player" in hand_info:
-        diagram += f'          <div class="name">{hand_info["Player"]}</div>\n'
+        diagram += constants.HAND_NAME_TEMPLATE.format(name=hand_info["Player"])
     if "Hand" in hand_info:
         diagram += f'{format_hand(hand_info["Hand"], args=args, deal=deal, indent=10)}'
     return diagram
@@ -191,25 +191,53 @@ def build_auction_table(deal: dict, width: int = 350) -> str:
     auction = format_auction((format_auction_calls(deal["Auction"], deal["Dealer"])))
     return constants.AUCTION_TEMPLATE.format(width=width, header=header, auction=auction)
 
-def build_card_table(deal: dict, args) -> str:
-    return constants.TABLE_TEMPLATE
+def build_card_table(deal: dict, card_to_seat : dict, args) -> str:
+    # Display played cards from the current trick on the felt
+    play = deal.get('Play', [])
+    n = args.played if hasattr(args, 'played') else 0
+    if n == 0:
+        return constants.TABLE_TEMPLATE
 
-def build_hand_table(deal: dict, args) -> str:
+    # Only show the last (n-1)%4 + 1 cards if n > 0
+    num_to_show = ((n-1) % 4 + 1) if n > 0 else 0
+    cards_to_show = play[:n][-num_to_show:] if num_to_show > 0 else []
+
+    # Find which player played each card (assume order matches directions cyclically)
+    # The first card in cards_to_show was played by (n - num_to_show + 1) % 4
+    html = constants.CARD_TABLE_INTRO
+    for i, card in enumerate(cards_to_show):
+        direction = card_to_seat.get(card, '')
+        html += constants.CARD_TABLE_ENTRY_TEMPLATE.format(direction=direction, pip=pips[card[0]], rank=card[1:])
+    html += constants.CARD_TABLE_OUTRO
+    return html
+
+def build_diagram(deal: dict, args) -> str:
+    # Create a dictionary mapping cards to seat directions
+    card_to_seat = {}
+    for seat in deal["Seats"]:
+        direction = seat.get("Direction", "")
+        hand = seat.get("Hand", {})
+        for suit in ["Spades", "Hearts", "Diamonds", "Clubs"]:
+            cards = hand.get(suit, "")
+            for card in cards:
+                card_id = f"{suit[0]}{card}"
+                card_to_seat[card_id] = direction.lower()
+
     # build html to display deal
     hands = format_hand_diagrams(deal["Seats"], args=args, deal=deal)
-    table = constants.TABLE_INTRO
+    table = constants.DIAGRAM_INTRO
 
     if args.north:
         table += constants.CENTER_HAND_TEMPLATE.format(hand=hands["North"])
 
     table += constants.WEST_HAND_TEMPLATE.format(hand=hands["West"] if args.west else '')       
-    table += build_card_table(deal, args)
+    table += build_card_table(deal, card_to_seat, args)
     table += constants.EAST_HAND_TEMPLATE.format(hand=hands["East"] if args.east else '')
       
     if args.south:
         table += constants.CENTER_HAND_TEMPLATE.format(hand=hands["South"])
 
-    table += constants.TABLE_OUTRO
+    table += constants.DIAGRAM_OUTRO
     return table
             
 def build_single_hand(hand: Dict[str, str], args=None, deal=None) -> str:
@@ -232,7 +260,7 @@ def build(deal : dict, args) -> str:
                  break
     
     elif len(seats_to_show) > 1:
-        html += build_hand_table(deal, args)
+        html += build_diagram(deal, args)
         
     # if specified, add auction
     if args.auction:
@@ -243,7 +271,7 @@ def build(deal : dict, args) -> str:
 if __name__ == '__main__' :
     import main
     sampleDeal = {'Board number': 12, 'Dealer': 'West', 'Auction': ['P', '1N', 'P', '2C', 'P', '2H', 'P', '3S', 'P', '4D', 'P', '4N', 'P', '5S', 'P', '7H', 'P', 'P', 'P'], 'Seats': [{'Player': 'Phillip', 'Direction': 'South', 'Hand': {'Spades': 'AK5', 'Hearts': 'KT43', 'Diamonds': 'K7', 'Clubs': 'AK62'}}, {'Player': 'Robot', 'Direction': 'West', 'Hand': {'Spades': 'J962', 'Hearts': '9', 'Diamonds': 'Q984', 'Clubs': 'T754'}}, {'Player': 'Robot', 'Direction': 'North', 'Hand': {'Spades': 'Q73', 'Hearts': 'AQJ52', 'Diamonds': 'AJ5', 'Clubs': 'J9'}}, {'Player': 'Robot', 'Direction': 'East', 'Hand': {'Spades': 'T84', 'Hearts': '876', 'Diamonds': 'T632', 'Clubs': 'Q83'}}], 'Play': ['S4', 'SA', 'S2', 'S3', 'HK', 'H9', 'H2', 'H6']}
-    args = main.parse_args(['dummyinput', '-nsa', '-r2', '-p8'])
+    args = main.parse_args(['dummyinput', '-nsewa', '-r2', '-p2'])
     result = build(sampleDeal, args)
     with open('test.html', 'w') as f:
         f.write(result)
