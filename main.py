@@ -24,6 +24,7 @@ def parse_args(argv):
     parser.add_argument('-w', '--west', action='store_true', help='print West hand')
     parser.add_argument('-a', '--auction', action='store_true', help='print auction')
     parser.add_argument('-r', '--rotate', type=int, help='number of seats to rotate clockwise')
+    parser.add_argument('-p', '--played', type=int, help='number of cards played', default=0)
     parser.add_argument('-o', '--output', default='output', help='common prefix for json and html output files')
     return parser.parse_args(argv)
 

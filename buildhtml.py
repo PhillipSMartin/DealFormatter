@@ -55,13 +55,8 @@ def rotate_deal(deal: dict, n: int) -> dict:
     for seat in deal['Seats']:
         seat["Direction"] = shift(seat["Direction"], n)
     return deal
-    
-def format_suit(suit: str) -> str:
-    # input: 'AJT6'
-    # output: ' A J 10 6'
-    return ' '.join(suit).replace('T','10') or '--'
 
-def format_hand(hand: Dict[str, str], with_breaks: bool = True, indent: int = 0) -> str:
+def format_hand(hand: Dict[str, str], args=None, deal=None, with_breaks: bool = True, indent: int = 0) -> str:
     # convert dictionary of holdings by suit into an html string displaying the hand
     # input:  {'Spades': 'T5', 'Hearts': 'AJ7', 'Diamonds': 'KQJ2', 'Clubs': 'AJT6'}
     # output: 
@@ -71,10 +66,40 @@ def format_hand(hand: Dict[str, str], with_breaks: bool = True, indent: int = 0)
     #     &#9827; A J 10 6<br />'
 
     br = '<br />\n' if with_breaks else '&nbsp;&nbsp;'
-    suit_str = [(' ' * indent) + pip + ' ' + format_suit(hand[suit]) for pip, suit in zip(pips.values(), globals.suits)]
+
+    # Determine played cards if args.played > 0
+    played_cards = set()
+    if args and hasattr(args, 'played') and getattr(args, 'played', 0) > 0 and deal and 'Play' in deal:
+        played_cards = set(deal['Play'][:args.played])
+
+    def card_html(card, played):
+        if played:
+            return f'<span style="color: #aaa;">{card}</span>'
+        return card
+
+    suit_str = []
+    for pip, suit in zip(pips.values(), globals.suits):
+        cards = hand[suit]
+        display = []
+        i = 0
+        while i < len(cards):
+            card = cards[i]
+            # Handle '10' as 'T'
+            if card == 'T':
+                card_str = '10'
+            else:
+                card_str = card
+            # Build suit+rank string (e.g. 'CK')
+            suit_letter = suit[0]
+            card_id = f'{suit_letter}{card_str}'
+            played = card_id in played_cards
+            display.append(card_html(card_str, played))
+            i += 1
+        suit_line = (' ' * indent) + pip + ' ' + ' '.join(display) if display else (' ' * indent) + pip + ' --'
+        suit_str.append(suit_line)
     return br.join(suit_str) + br
 
-def format_hand_diagram(hand_info: dict) -> str:
+def format_hand_diagram(hand_info: dict, args=None, deal=None) -> str:
     # convert dictionary of hand info into an html string displaying the direction, player, and hand itself
     # input:  { "Player": "Phillip", "Direction": "North", "Hand": ...}
     # output: 
@@ -90,14 +115,14 @@ def format_hand_diagram(hand_info: dict) -> str:
     if "Player" in hand_info:
         diagram += f'          <div class="name">{hand_info["Player"]}</div>\n'
     if "Hand" in hand_info:
-        diagram += f'{format_hand(hand_info["Hand"], indent=10)}'
+        diagram += f'{format_hand(hand_info["Hand"], args=args, deal=deal, indent=10)}'
     return diagram
     
     
-def format_hand_diagrams(hands: dict) -> dict:
+def format_hand_diagrams(hands: dict, args=None, deal=None) -> dict:
     # convert list of hands into a dictionary of hand diagrams, keyed by direction
      
-    return dict([(hand['Direction'], format_hand_diagram(hand)) for hand in hands])
+    return dict([(hand['Direction'], format_hand_diagram(hand, args=args, deal=deal)) for hand in hands])
 
 def format_call(call: str) -> str:
     # convert abbreviation into a displayable html string
@@ -201,7 +226,7 @@ def build_auction_table(deal: dict, width: int = 350) -> str:
 
 def build_hand_table(deal: dict, args) -> str:
     # build html to display deal
-    hands = format_hand_diagrams(deal["Seats"])
+    hands = format_hand_diagrams(deal["Seats"], args=args, deal=deal)
     table = """<div align="center" class="bridge-diagram">
   <table>
     <colgroup>
@@ -252,8 +277,9 @@ def build_hand_table(deal: dict, args) -> str:
     table += "    </tbody>\n  </table>\n</div>\n"
     return table
             
-def build_single_hand(hand: str) -> str:
-    return f'<TABLE width="300" border="0" cellspacing="0" cellpadding="0" align="center"><TR><TD WIDTH="100%" Align="center">{hand}</TR></TABLE>'
+def build_single_hand(hand: Dict[str, str], args=None, deal=None) -> str:
+    hand_html = format_hand(hand, args=args, deal=deal, with_breaks=False)
+    return f'<TABLE width="300" border="0" cellspacing="0" cellpadding="0" align="center"><TR><TD WIDTH="100%" Align="center">{hand_html}</TR></TABLE>'
  
 def build(deal : dict, args) -> str:
     
@@ -320,7 +346,7 @@ def build(deal : dict, args) -> str:
     if len(seats_to_show) == 1:
         for seat in deal['Seats']:
             if seat['Direction'] == globals.seats[seats_to_show[0]]:
-                 html = build_single_hand(format_hand(seat['Hand'], False))
+                 html = build_single_hand(seat['Hand'], args=args, deal=deal)
                  break
     
     elif len(seats_to_show) > 1:
@@ -334,8 +360,8 @@ def build(deal : dict, args) -> str:
 
 if __name__ == '__main__' :
     import main
-    sampleDeal = {"Board number": 8, "Dealer": "West", "Auction": ["1S", "P", "1N", "2H", "2S", "P", "P", "3C", "P", "3H", "D", "P", "P", "P"], "Seats": [{"Player": "psmartin", "Direction": "South", "Hand": {"Spades": "2", "Hearts": "AK876", "Diamonds": "Q2", "Clubs": "KQ642"}}, {"Player": "Robot", "Direction": "West", "Hand": {"Spades": "AKQJ95", "Hearts": "5", "Diamonds": "74", "Clubs": "A975"}}, {"Player": "Robot", "Direction": "North", "Hand": {"Spades": "873", "Hearts": "Q4", "Diamonds": "KJT953", "Clubs": "J8"}}, {"Player": "Robot", "Direction": "East", "Hand": {"Spades": "T64", "Hearts": "JT932", "Diamonds": "A86", "Clubs": "T3"}}]}
-    args = main.parse_args(['dummyinput', '-nsa'])
+    sampleDeal = {'Board number': 12, 'Dealer': 'West', 'Auction': ['P', '1N', 'P', '2C', 'P', '2H', 'P', '3S', 'P', '4D', 'P', '4N', 'P', '5S', 'P', '7H', 'P', 'P', 'P'], 'Seats': [{'Player': 'Phillip', 'Direction': 'South', 'Hand': {'Spades': 'AK5', 'Hearts': 'KT43', 'Diamonds': 'K7', 'Clubs': 'AK62'}}, {'Player': 'Robot', 'Direction': 'West', 'Hand': {'Spades': 'J962', 'Hearts': '9', 'Diamonds': 'Q984', 'Clubs': 'T754'}}, {'Player': 'Robot', 'Direction': 'North', 'Hand': {'Spades': 'Q73', 'Hearts': 'AQJ52', 'Diamonds': 'AJ5', 'Clubs': 'J9'}}, {'Player': 'Robot', 'Direction': 'East', 'Hand': {'Spades': 'T84', 'Hearts': '876', 'Diamonds': 'T632', 'Clubs': 'Q83'}}], 'Play': ['S4', 'SA', 'S2', 'S3', 'HK', 'H9', 'H2', 'H6']}
+    args = main.parse_args(['dummyinput', '-nsa', '-r2', '-p8'])
     result = build(sampleDeal, args)
     with open('test.html', 'w') as f:
         f.write(result)
