@@ -32,6 +32,11 @@ def parse_args(argv):
 def main(args):
     assert '.' not in args.output, "Output file name should be prefix only"
 
+    # Build the switch string based on specified seat switches
+    attr_map = {'n': 'north', 's': 'south', 'e': 'east', 'w': 'west', 'a': 'auction'}
+    seat_switches = ''.join(c for c in 'nsewa' if getattr(args, attr_map[c], False))
+    filename_base = args.output + ('-' + seat_switches if seat_switches else '')
+
     deal = {}
 
     # build deal
@@ -58,14 +63,14 @@ def main(args):
         played_list = [args.played]
 
     for n in played_list:
-        suffix = f"{n}" if n > 0 else ''
+        suffix = f"-{n}" if n > 0 else ''
 
         # build html
         args.played = n
         html = buildhtml.build(deal, args)
     
         # write it to the specified file
-        filename = args.output + suffix + ".html"
+        filename = filename_base + suffix + ".html"
         f = open(filename, 'w')
         f.write(html)
         f.close()

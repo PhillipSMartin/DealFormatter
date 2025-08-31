@@ -1,4 +1,9 @@
 import constants
+import copy
+import globals
+import main
+
+from typing import Dict, List
 
 """
 The build method of this module takes as input a dictionary describing a deal in the following format:
@@ -32,10 +37,6 @@ The build method of this module takes as input a dictionary describing a deal in
     
     if r is specified, the deal is shifted clockwise that number of positions (and directions are reassigned before formatting)
 """
-import globals
-
-from typing import Dict, List
-
 
 globals.initialize()
 pips = { 'S': '&#9824;', 
@@ -245,7 +246,6 @@ def build_single_hand(hand: Dict[str, str], args=None, deal=None) -> str:
     return constants.HORIZONTAL_HAND_TEMPLATE.format(hand_html=hand_html)
  
 def build(deal : dict, args) -> str: 
-    import copy
     deal_copy = copy.deepcopy(deal)
     html = constants.STYLE
 
@@ -271,7 +271,6 @@ def build(deal : dict, args) -> str:
     return html
 
 if __name__ == '__main__' :
-    import main
     sampleDeal = {'Board number': 12, 'Dealer': 'West', 'Auction': ['P', '1N', 'P', '2C', 'P', '2H', 'P', '3S', 'P', '4D', 'P', '4N', 'P', '5S', 'P', '7H', 'P', 'P', 'P'], 'Seats': [{'Player': 'Phillip', 'Direction': 'South', 'Hand': {'Spades': 'AK5', 'Hearts': 'KT43', 'Diamonds': 'K7', 'Clubs': 'AK62'}}, {'Player': 'Robot', 'Direction': 'West', 'Hand': {'Spades': 'J962', 'Hearts': '9', 'Diamonds': 'Q984', 'Clubs': 'T754'}}, {'Player': 'Robot', 'Direction': 'North', 'Hand': {'Spades': 'Q73', 'Hearts': 'AQJ52', 'Diamonds': 'AJ5', 'Clubs': 'J9'}}, {'Player': 'Robot', 'Direction': 'East', 'Hand': {'Spades': 'T84', 'Hearts': '876', 'Diamonds': 'T632', 'Clubs': 'Q83'}}], 'Play': ['S4', 'SA', 'S2', 'S3', 'HK', 'H9', 'H2', 'H6']}
     args = main.parse_args(['dummyinput', '-nsewa', '-r2', '-p2'])
     result = build(sampleDeal, args)

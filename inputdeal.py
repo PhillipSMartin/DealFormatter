@@ -1,5 +1,7 @@
-# -*- coding: utf-8 -*-
-# -*- coding: utf-8 -*-
+import globals
+
+from typing import List
+
 """
 The input method of this module asks for input from the user and returns a dictionary with deal info in the following format:
         {
@@ -21,9 +23,6 @@ The input method of this module asks for input from the user and returns a dicti
                 "Play": <a list of cards played, e.g. ["CK", "C8"]>
             }
 """
-import globals
-
-from typing import List
 
 globals.initialize()
 
