@@ -53,7 +53,7 @@ def main(args):
 
     # if 'played' is negative, show all played cards
     if args.played < 0:
-        played_list = list(range(0, len(deal.get('Play', [])) + 1))
+        played_list = list(range(1, len(deal.get('Play', [])) + 1))
     else:
         played_list = [args.played]
 
