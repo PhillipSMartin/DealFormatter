@@ -51,13 +51,23 @@ def main(args):
 
     assert deal, 'Input must be *, **, or start with http'
 
-    # build the html
-    html = buildhtml.build(deal, args)
+    # if 'played' is negative, show all played cards
+    if args.played < 0:
+        played_list = list(range(0, len(deal.get('Play', [])) + 1))
+    else:
+        played_list = [args.played]
 
-    # write it to the specified file
-    f = open(args.output + ".html", 'w')
-    f.write(html)
-    f.close()
+    for n in played_list:
+        suffix = f"{n}" if n > 0 else ''
+
+        # build html
+        args.played = n
+        html = buildhtml.build(deal, args)
+    
+        # write it to the specified file
+        f = open(args.output + suffix + ".html", 'w')
+        f.write(html)
+        f.close()
 
     print(f"Html has been written to {args.output}")
 
