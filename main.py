@@ -65,11 +65,12 @@ def main(args):
         html = buildhtml.build(deal, args)
     
         # write it to the specified file
-        f = open(args.output + suffix + ".html", 'w')
+        filename = args.output + suffix + ".html"
+        f = open(filename, 'w')
         f.write(html)
         f.close()
 
-    print(f"Html has been written to {args.output}")
+        print(f"Html has been written to {filename}")
 
 
 if __name__ == '__main__':
