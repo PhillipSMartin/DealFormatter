@@ -18,7 +18,7 @@ STYLE = """\
        Uses max() to avoid negative padding if felt > center width. */
     .bridge-diagram .center-hand {
       text-align: left;
-      padding-left: 30;
+      padding-left: 30px;
     }
 
     /* Vertically center the felt row so it's equidistant from NORTH/SOUTH */
