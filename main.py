@@ -27,7 +27,8 @@ def parse_args(argv):
     parser.add_argument('-p', '--played', type=int, help='number of cards played', default=0)
     parser.add_argument('-o', '--output', default='output', help='common prefix for json and html output files')
     parser.add_argument('-v', '--vertical', action='store_true', help='use vertical (vs horizontal) hand layout')
-    parser.add_argument ('-g', '--gray', action='store_true', help='gray out played cards rather than remove them')
+    parser.add_argument('-g', '--gray', action='store_true', help='gray out played cards rather than remove them')
+    parser.add_argument('--name', default='', help='name of South player')
     return parser.parse_args(argv)
 
 
@@ -57,6 +58,12 @@ def main(args):
         save_file.close()
 
     assert deal, 'Input must be *, **, or start with http'
+
+    # change name of South player if specified
+    if args.name:
+        for seat in deal['Seats']:
+            if seat['Direction'] == 'South':
+                seat['Player'] = args.name
 
     # if 'played' is negative, show all played cards
     if args.played < 0:
