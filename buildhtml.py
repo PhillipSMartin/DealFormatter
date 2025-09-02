@@ -242,8 +242,14 @@ def build_diagram(deal: dict, args) -> str:
     return table
             
 def build_single_hand(hand: Dict[str, str], args=None, deal=None) -> str:
-    hand_html = format_hand(hand, args=args, deal=deal, with_breaks=False)
-    return constants.HORIZONTAL_HAND_TEMPLATE.format(hand_html=hand_html)
+    if args.vertical:
+        hand_html = constants.DIAGRAM_INTRO
+        hand_html += constants.CENTER_HAND_TEMPLATE.format(hand=format_hand(hand, args=args, deal=deal))
+        hand_html += constants.DIAGRAM_OUTRO
+        return hand_html    
+    else:
+        hand_html = format_hand(hand, args=args, deal=deal, with_breaks=False)
+        return constants.HORIZONTAL_HAND_TEMPLATE.format(hand_html=hand_html)
  
 def build(deal : dict, args) -> str: 
     deal_copy = copy.deepcopy(deal)
@@ -252,14 +258,13 @@ def build(deal : dict, args) -> str:
     # rotate deal if necessary
     if args.rotate:
         rotate_deal(deal_copy, args.rotate)
+    seats_to_show = args.north * 'N' + args.east * 'E' + args.south * 'S' + args.west * 'W'
 
     # if a single seat is specified, format it as a single line
-    seats_to_show = args.north * 'N' + args.east * 'E' + args.south * 'S' + args.west * 'W'
     if len(seats_to_show) == 1:
         for seat in deal_copy['Seats']:
             if seat['Direction'] == globals.seats[seats_to_show[0]]:
-                 html = build_single_hand(seat['Hand'], args=args, deal=deal_copy)
-                 break
+                html += build_single_hand(seat['Hand'], args=args, deal=deal_copy)
 
     elif len(seats_to_show) > 1:
         html += build_diagram(deal_copy, args)

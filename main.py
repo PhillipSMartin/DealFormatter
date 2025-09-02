@@ -26,6 +26,8 @@ def parse_args(argv):
     parser.add_argument('-r', '--rotate', type=int, help='number of seats to rotate clockwise')
     parser.add_argument('-p', '--played', type=int, help='number of cards played', default=0)
     parser.add_argument('-o', '--output', default='output', help='common prefix for json and html output files')
+    parser.add_argument('-v', '--vertical', action='store_true', help='use vertical (vs horizontal) hand layout')
+    parser.add_argument ('-g', '--gray', action='store_true', help='gray out played cards rather than remove them')
     return parser.parse_args(argv)
 
 
