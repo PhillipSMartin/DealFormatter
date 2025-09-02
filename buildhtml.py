@@ -95,6 +95,9 @@ def format_hand(hand: Dict[str, str], args=None, deal=None, with_breaks: bool = 
             suit_letter = suit[0]
             card_id = f'{suit_letter}{card_str}'
             played = card_id in played_cards
+            if played and not getattr(args, 'gray', False):
+                i += 1
+                continue  # Remove played card if not graying
             display.append(card_html(card_str, played))
             i += 1
         suit_line = (' ' * indent) + pip + ' ' + ' '.join(display) if display else (' ' * indent) + pip + ' --'
