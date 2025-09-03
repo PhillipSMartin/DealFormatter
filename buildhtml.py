@@ -86,22 +86,28 @@ def format_hand(hand: Dict[str, str], args=None, deal=None, with_breaks: bool = 
         i = 0
         while i < len(cards):
             card = cards[i]
+
             # Handle '10' as 'T'
             if card == 'T':
                 card_str = '10'
             else:
                 card_str = card
+
             # Build suit+rank string (e.g. 'CK')
             suit_letter = suit[0]
-            card_id = f'{suit_letter}{card_str}'
+            card_id = f'{suit_letter}{card}'
             played = card_id in played_cards
+
             if played and not getattr(args, 'gray', False):
                 i += 1
                 continue  # Remove played card if not graying
+
             display.append(card_html(card_str, played))
             i += 1
+
         suit_line = (' ' * indent) + pip + ' ' + ' '.join(display) if display else (' ' * indent) + pip + ' --'
         suit_str.append(suit_line)
+        
     return br.join(suit_str) + br
 
 def format_hand_diagram(hand_info: dict, args=None, deal=None) -> str:
@@ -211,6 +217,8 @@ def build_card_table(deal: dict, card_to_seat : dict, args) -> str:
     html = constants.CARD_TABLE_INTRO
     for i, card in enumerate(cards_to_show):
         direction = card_to_seat.get(card, '')
+        if card[1] == 'T':
+            card = card[0] + '10'
         html += constants.CARD_TABLE_ENTRY_TEMPLATE.format(direction=direction, pip=pips[card[0]], rank=card[1:])
     html += constants.CARD_TABLE_OUTRO
     return html
