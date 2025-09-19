@@ -29,6 +29,7 @@ def parse_args(argv):
     parser.add_argument('-v', '--vertical', action='store_true', help='use vertical (vs horizontal) hand layout')
     parser.add_argument('-g', '--gray', action='store_true', help='gray out played cards rather than remove them')
     parser.add_argument('--name', default='', help='name of South player')
+    parser.add_argument('-x', '--exclude', default='', help='suits to exclude (shdc, e.g. "shc")')
     return parser.parse_args(argv)
 
 

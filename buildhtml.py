@@ -80,34 +80,32 @@ def format_hand(hand: Dict[str, str], args=None, deal=None, with_breaks: bool = 
         return card
 
     suit_str = []
+    exclude_raw = getattr(args, 'exclude', '')
+    exclude = set(exclude_raw.lower()) if exclude_raw else set()
     for pip, suit in zip(pips.values(), globals.suits):
+        suit_letter = suit[0].lower()
+        if suit_letter in exclude:
+            continue  # Skip excluded suit, no break after
         cards = hand[suit]
         display = []
         i = 0
         while i < len(cards):
             card = cards[i]
-
             # Handle '10' as 'T'
             if card == 'T':
                 card_str = '10'
             else:
                 card_str = card
-
             # Build suit+rank string (e.g. 'CK')
-            suit_letter = suit[0]
-            card_id = f'{suit_letter}{card}'
+            card_id = f'{suit[0]}{card}'
             played = card_id in played_cards
-
             if played and not getattr(args, 'gray', False):
                 i += 1
                 continue  # Remove played card if not graying
-
             display.append(card_html(card_str, played))
             i += 1
-
         suit_line = (' ' * indent) + pip + ' ' + ' '.join(display) if display else (' ' * indent) + pip + ' --'
         suit_str.append(suit_line)
-        
     return br.join(suit_str) + br
 
 def format_hand_diagram(hand_info: dict, args=None, deal=None) -> str:
