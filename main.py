@@ -41,6 +41,7 @@ def main(args):
     seat_switches = ''.join(c for c in 'nsewa' if getattr(args, attr_map[c], False))
     filename_base = args.output + ('-' + seat_switches if seat_switches else '')
 
+
     deal = {}
 
     # build deal
@@ -59,6 +60,17 @@ def main(args):
         save_file.close()
 
     assert deal, 'Input must be *, **, or start with http'
+
+    # Preprocess: sort suit lists in each hand
+    suit_order = 'AKQJT98765432x'
+    for seat in deal.get('Seats', []):
+        hand = seat.get('Hand', {})
+        for suit in ['Spades', 'Hearts', 'Diamonds', 'Clubs']:
+            cards = hand.get(suit, '')
+            # Convert to uppercase before sorting
+            cards = cards.upper()
+            sorted_cards = ''.join(sorted(cards, key=lambda c: suit_order.index(c) if c in suit_order else 99))
+            hand[suit] = sorted_cards
 
     # change name of South player if specified
     if args.name:
