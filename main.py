@@ -11,13 +11,15 @@ import buildhtml
 import inputdeal
 import json
 import parseurl
+import globals
+import os
 import re
 import sys
 
 
 def parse_args(argv):
     parser = argparse.ArgumentParser(description='Deal Formatter Tool', )
-    parser.add_argument('input', help='html string, * for console input, or ** for previous deal ')
+    parser.add_argument('input', help='html string, path to pbn file, * for console input, or ** for previous deal ')
     parser.add_argument('-n', '--north', action='store_true', help='print North hand')
     parser.add_argument('-e', '--east', action='store_true', help='print East hand')
     parser.add_argument('-s', '--south', action='store_true', help='print South hand')
@@ -34,6 +36,7 @@ def parse_args(argv):
 
 
 def main(args):
+    globals.initialize()
     assert '.' not in args.output, "Output file name should be prefix only"
 
     # Build the switch string based on specified seat switches
@@ -56,6 +59,67 @@ def main(args):
             json.dump(deal, save_file)
         elif re.match("http", args.input):
             deal = parseurl.parse(args.input)
+            json.dump(deal, save_file)
+        elif args.input.lower().endswith('.pbn') and os.path.exists(args.input):
+            # Parse a PBN file and build deal structure
+            with open(args.input, 'r') as pf:
+                pbn_text = pf.read()
+
+            deal = {}
+            # Board number
+            m = re.search(r'\[Board\s+"?(\d+)"?\]', pbn_text)
+            if m:
+                deal['Board number'] = int(m.group(1))
+
+            # Deal tag: format like N:hand1 hand2 hand3 hand4
+            m = re.search(r'\[Deal\s+"?([NESW]:[^"\]]+)"?\]', pbn_text)
+            if m:
+                deal_str = m.group(1).strip()
+                first_dir = deal_str[0]
+                hands_str = deal_str[2:].strip()
+                hand_tokens = hands_str.split()
+                # Ensure we have four hands
+                if len(hand_tokens) >= 4:
+                    globals.initialize()
+                    # Map first hand to direction and proceed clockwise
+                    clockwise = ['North', 'East', 'South', 'West']
+                    start_dir = globals.seats.get(first_dir.upper(), 'North')
+                    si = clockwise.index(start_dir)
+                    directions_order = clockwise[si:] + clockwise[:si]
+                    seats = []
+                    for dir_name, hand_token in zip(directions_order, hand_tokens[:4]):
+                        suits = hand_token.split('.')
+                        # normalize ranks (uppercase, T for 10)
+                        suits = [s.replace('10', 'T').upper() for s in suits]
+                        seats.append({ 'Direction': dir_name, 'Hand': globals.build_hand(suits) })
+                    deal['Seats'] = seats
+
+            # Dealer tag (optional)
+            m = re.search(r'\[Dealer\s+"?([NESW])"?\]', pbn_text)
+            if m:
+                deal['Dealer'] = globals.seats.get(m.group(1).upper(), '')
+
+            # Attempt to extract auction lines between the [Auction] tag and the following blank line or '{}' block
+            m = re.search(r'\[Auction[^\]]*\][\r\n]+([^\{\[]+)', pbn_text)
+            if m:
+                auction_block = m.group(1).strip()
+                # Split on whitespace and normalize tokens (convert Pass to P etc.)
+                tokens = [t.strip() for t in re.split(r'\s+', auction_block) if t.strip()]
+                # Basic normalization: map Pass -> P, Double -> D, Redouble -> R, NoTrump/N -> N
+                norm = []
+                for t in tokens:
+                    tt = t.upper()
+                    if tt in ('PASS', 'P'):
+                        norm.append('P')
+                    elif tt in ('DOUBLE', 'D'):
+                        norm.append('D')
+                    elif tt in ('REDOUBLE', 'R'):
+                        norm.append('R')
+                    else:
+                        norm.append(tt.replace('NT', 'N'))
+                if norm:
+                    deal['Auction'] = norm
+
             json.dump(deal, save_file)
         save_file.close()
 
