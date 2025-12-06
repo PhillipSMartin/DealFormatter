@@ -32,6 +32,7 @@ def parse_args(argv):
     parser.add_argument('-g', '--gray', action='store_true', help='gray out played cards rather than remove them')
     parser.add_argument('--name', default='', help='name of South player')
     parser.add_argument('-x', '--exclude', default='', help='suits to exclude (shdc, e.g. "shc")')
+    parser.add_argument('-u', '--url', action='store_true', help='write BBO-format url from saved json and exit')
     return parser.parse_args(argv)
 
 
@@ -52,6 +53,62 @@ def main(args):
         save_file = open(args.output + ".json", "r")
         deal = json.load(save_file)
         save_file.close()
+        # If requested, convert saved JSON back into a BBO-format URL and write to a .txt file
+        if getattr(args, 'url', False):
+            # Build BBO-format URL that parseurl.parse can read
+            globals.initialize()
+            directions_south_first = globals.directions[globals.directions.index('South'):] + globals.directions[:globals.directions.index('South')]
+
+            # map directions to seats
+            seat_map = {seat.get('Direction', ''): seat for seat in deal.get('Seats', [])}
+
+            # players in order South, West, North, East
+            players = [seat_map.get(d, {}).get('Player', '') for d in directions_south_first]
+            players_str = ','.join(players)
+
+            # build hand strings in same order
+            hands = []
+            for i, d in enumerate(directions_south_first):
+                seat = seat_map.get(d, {})
+                hand = seat.get('Hand', {})
+                s = hand.get('Spades', '')
+                h = hand.get('Hearts', '')
+                dmt = hand.get('Diamonds', '')
+                c = hand.get('Clubs', '')
+                # first hand needs dealer digit prefix
+                if i == 0:
+                    dealer = deal.get('Dealer', globals.directions[0])
+                    d_idx = globals.directions.index(dealer) if dealer in globals.directions else 0
+                    num = (d_idx + 2) % 4
+                    if num == 0:
+                        num = 4
+                    prefix = str(num)
+                else:
+                    prefix = ''
+                hand_str = f"{prefix}S{s}H{h}D{dmt}C{c}"
+                hands.append(hand_str)
+
+            md_param = ','.join(hands)
+
+            # auction
+            auction = ''.join(deal.get('Auction', []))
+
+            # play cards as repeated pc entries
+            play_entries = ''
+            for card in deal.get('Play', []):
+                play_entries += f'pc|{card}|' 
+
+            # board
+            board = deal.get('Board number', None)
+            board_part = f'Board%20{board}|' if board is not None else ''
+
+            url = f"https://www.bridgebase.com/tools/handviewer.html?lin=pn|{players_str}|st||md|{md_param}|ah|{board_part}mb|{auction}|{play_entries}"
+
+            out_txt = filename_base + '.txt'
+            with open(out_txt, 'w') as tf:
+                tf.write(url)
+            print(f"BBO-format url written to {out_txt}")
+            return
     else:
         save_file = open(args.output + ".json", "w")
         if args.input == '*':
