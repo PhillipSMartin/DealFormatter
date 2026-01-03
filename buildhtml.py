@@ -203,7 +203,7 @@ def build_card_table(deal: dict, card_to_seat : dict, args) -> str:
     # Display played cards from the current trick on the felt
     play = deal.get('Play', [])
     n = args.played if hasattr(args, 'played') else 0
-    if n == 0:
+    if n == 0 or args.clear:
         return constants.TABLE_TEMPLATE
 
     # Only show the last (n-1)%4 + 1 cards if n > 0

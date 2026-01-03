@@ -10,7 +10,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/main.py",
-            "args": ["**", "-nsew", "-o", "test"],
+            "args": ["**", "-nsewc", "-o", "test", "-p1"],
 
         }
     ]
