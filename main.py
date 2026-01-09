@@ -31,6 +31,7 @@ def parse_args(argv):
     parser.add_argument('-o', '--output', default='output', help='common prefix for json and html output files')
     parser.add_argument('-v', '--vertical', action='store_true', help='use vertical (vs horizontal) hand layout')
     parser.add_argument('-g', '--gray', action='store_true', help='gray out played cards rather than remove them')
+    parser.add_argument('-W', '--white', action='store_true', help='render played cards white (invisible)')
     parser.add_argument('--name', default='', help='name of South player')
     parser.add_argument('-x', '--exclude', default='', help='suits to exclude (shdc, e.g. "shc")')
     parser.add_argument('-u', '--url', action='store_true', help='write BBO-format url from saved json and exit')

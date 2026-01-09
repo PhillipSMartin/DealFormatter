@@ -76,7 +76,11 @@ def format_hand(hand: Dict[str, str], args=None, deal=None, with_breaks: bool = 
 
     def card_html(card, played):
         if played:
-            return f'<span style="color: #aaa;">{card}</span>'
+            if args and getattr(args, 'white', False):
+                return f'<span style="color: #fff;">{card}</span>'
+            if args and getattr(args, 'gray', False):
+                return f'<span style="color: #aaa;">{card}</span>'
+            return card
         return card
 
     suit_str = []
@@ -88,6 +92,7 @@ def format_hand(hand: Dict[str, str], args=None, deal=None, with_breaks: bool = 
             continue  # Skip excluded suit, no break after
         cards = hand[suit]
         display = []
+        white_display = []
         i = 0
         while i < len(cards):
             card = cards[i]
@@ -99,12 +104,22 @@ def format_hand(hand: Dict[str, str], args=None, deal=None, with_breaks: bool = 
             # Build suit+rank string (e.g. 'CK')
             card_id = f'{suit[0]}{card}'
             played = card_id in played_cards
-            if played and not getattr(args, 'gray', False):
+            # If played and neither gray nor white, remove it
+            if played and not (args and (getattr(args, 'gray', False) or getattr(args, 'white', False))):
                 i += 1
-                continue  # Remove played card if not graying
-            display.append(card_html(card_str, played))
+                continue
+
+            # If whited, collect to append at end; if grayed, keep in-place
+            if played and args and getattr(args, 'white', False):
+                white_display.append(card_html(card_str, played))
+            else:
+                display.append(card_html(card_str, played))
+
             i += 1
-        suit_line = (' ' * indent) + pip + ' ' + ' '.join(display) if display else (' ' * indent) + pip + ' --'
+
+        # Whited cards should appear at the end of the suit
+        full_display = display + white_display
+        suit_line = (' ' * indent) + pip + ' ' + ' '.join(full_display) if full_display else (' ' * indent) + pip + ' --'
         suit_str.append(suit_line)
     return br.join(suit_str) + br
 
