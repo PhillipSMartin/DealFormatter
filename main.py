@@ -25,6 +25,7 @@ def parse_args(argv):
     parser.add_argument('-s', '--south', action='store_true', help='print South hand')
     parser.add_argument('-w', '--west', action='store_true', help='print West hand')
     parser.add_argument('-a', '--auction', action='store_true', help='print auction')
+    parser.add_argument('-A', '--auction-no-header', action='store_true', help='print auction without direction/player headers')
     parser.add_argument('-r', '--rotate', type=int, help='number of seats to rotate clockwise')
     parser.add_argument('-p', '--played', type=int, help='number of cards played', default=0)
     parser.add_argument('-o', '--output', default='output', help='common prefix for json and html output files')
@@ -42,8 +43,8 @@ def main(args):
     assert '.' not in args.output, "Output file name should be prefix only"
 
     # Build the switch string based on specified seat switches
-    attr_map = {'n': 'north', 's': 'south', 'e': 'east', 'w': 'west', 'a': 'auction'}
-    seat_switches = ''.join(c for c in 'nsewa' if getattr(args, attr_map[c], False))
+    attr_map = {'n': 'north', 's': 'south', 'e': 'east', 'w': 'west', 'a': 'auction', 'A': 'auction_no_header'}
+    seat_switches = ''.join(c for c in 'nsewaA' if getattr(args, attr_map[c], False))
     filename_base = args.output + ('-' + seat_switches if seat_switches else '')
 
 
