@@ -36,6 +36,7 @@ def parse_args(argv):
     parser.add_argument('-x', '--exclude', default='', help='suits to exclude (shdc, e.g. "shc")')
     parser.add_argument('-u', '--url', action='store_true', help='write BBO-format url from saved json and exit')
     parser.add_argument('-c', '--clear', action='store_true', help='do not display played cards on table')
+    parser.add_argument('--title', default='', help='title to display at the top of the html output')
     return parser.parse_args(argv)
 
 

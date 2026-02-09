@@ -289,6 +289,11 @@ def build(deal : dict, args) -> str:
     deal_copy = copy.deepcopy(deal)
     html = constants.STYLE
 
+    # add title if specified
+    if args.title:
+        title_html = args.title.replace('\\n', '<br>')
+        html += f'<div style="text-align:left;font-family:sans-serif;font-size:1.2em;margin-bottom:0.5em;">{title_html}</div>\n'
+
     # rotate deal if necessary
     if args.rotate:
         rotate_deal(deal_copy, args.rotate)
