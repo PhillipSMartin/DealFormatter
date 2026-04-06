@@ -151,7 +151,7 @@ def main(args):
                     for dir_name, hand_token in zip(directions_order, hand_tokens[:4]):
                         suits = hand_token.split('.')
                         # normalize ranks (uppercase, T for 10)
-                        suits = [s.replace('10', 'T').upper() for s in suits]
+                        suits = [s.replace('10', 'T').upper().replace('X', 'x') for s in suits]
                         seats.append({ 'Direction': dir_name, 'Hand': globals.build_hand(suits) })
                     deal['Seats'] = seats
 
@@ -192,8 +192,8 @@ def main(args):
         hand = seat.get('Hand', {})
         for suit in ['Spades', 'Hearts', 'Diamonds', 'Clubs']:
             cards = hand.get(suit, '')
-            # Convert to uppercase before sorting
-            cards = cards.upper()
+            # Convert to uppercase before sorting, but keep 'x' lowercase
+            cards = cards.upper().replace('X', 'x')
             sorted_cards = ''.join(sorted(cards, key=lambda c: suit_order.index(c) if c in suit_order else 99))
             hand[suit] = sorted_cards
 
