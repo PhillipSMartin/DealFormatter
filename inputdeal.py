@@ -51,38 +51,76 @@ def fillSpots(hands: List[dict]):
                 cards.append(spot)
             hand[suit] = sortSuit(''.join(card for card in cards if card != 'x')) + 'x' * cards.count('x')
 
-def remainingHand(hands: List[dict]) -> dict:
-    # Given three complete 13-card hands, return the hand holding the 13 unused cards,
-    # or None if the three hands aren't complete and distinct.
-    if len(hands) != 3:
+def remainingHand(seats: List[dict]) -> dict:
+    # Given three complete 13-card hands, return the hand holding the 13 unused cards.
+    # Prints the reason and returns None if the three hands aren't complete and distinct.
+    if len(seats) != 3 or any("Hand" not in seat for seat in seats):
+        print("Can't fill in the last hand: the other three hands must all be entered")
         return None
     used = {suit: set() for suit in globals.suits}
-    for hand in hands:
-        if sum(len(hand[suit]) for suit in globals.suits) != 13:
+    for seat in seats:
+        hand = seat["Hand"]
+        count = sum(len(hand[suit]) for suit in globals.suits)
+        if count != 13:
+            print(f"Can't fill in the last hand: {seat['Direction']} has {count} cards")
             return None
         for suit in globals.suits:
             for card in hand[suit]:
-                if card not in RANKS or card in used[suit]:
+                if card not in RANKS:
+                    print(f"Can't fill in the last hand: {seat['Direction']} has unknown card '{card}' in {suit}")
+                    return None
+                if card in used[suit]:
+                    print(f"Can't fill in the last hand: {card} of {suit} appears twice")
                     return None
                 used[suit].add(card)
     return {suit: ''.join(r for r in RANKS if r not in used[suit]) for suit in globals.suits}
+
+def handError(suit_list: List[str], earlier: List[dict]) -> str:
+    # Return a description of what's wrong with a newly entered hand, or None if it's valid.
+    # A hand may have fewer than 13 cards, but not more, and no card may repeat one already entered.
+    if len(suit_list) != 4:
+        return f"Expected 4 suits separated by commas, got {len(suit_list)}"
+    count = sum(len(cards) for cards in suit_list)
+    if count > 13:
+        return f"Hand has {count} cards"
+    for suit, cards in zip(globals.suits, suit_list):
+        for card in cards:
+            if card not in RANKS and card != 'x':
+                return f"Unknown card '{card}' in {suit}"
+        for card in set(cards) - {'x'}:
+            if cards.count(card) > 1:
+                return f"{card} of {suit} entered twice"
+            for seat in earlier:
+                if card in seat["Hand"][suit]:
+                    return f"{card} of {suit} is already in {seat['Direction']}'s hand"
+        spots_left = len([spot for spot in SPOTS if all(spot not in seat["Hand"][suit] for seat in earlier) and spot not in cards])
+        xs = cards.count('x') + sum(seat["Hand"][suit].count('x') for seat in earlier)
+        if xs > spots_left:
+            return f"Too many x's in {suit}: only {spots_left} unused spot cards left"
+    return None
 
 def inputHands() -> List[dict]:
     seats = []
     for direction in globals.directions:
         name = input(f"{direction} name (or leave blank): ")
-        hand = input(f"{direction} hand (comma delimited, 'T' or '10' for 10): ")
         seats.append({ "Direction": direction})
         if len(name) > 0:
             seats[-1]["Player"] = name
-        if len(hand) > 0:
-            hand = hand.upper().replace(' ', '').replace('10', 'T').replace('X', 'x')
-            seats[-1]["Hand"] = globals.build_hand(hand.split(','))
+        while True:
+            hand = input(f"{direction} hand (comma delimited, 'T' or '10' for 10): ")
+            if len(hand) == 0:
+                break
+            suit_list = hand.upper().replace(' ', '').replace('10', 'T').replace('X', 'x').split(',')
+            error = handError(suit_list, [seat for seat in seats if "Hand" in seat])
+            if error is None:
+                seats[-1]["Hand"] = globals.build_hand(suit_list)
+                break
+            print(f"Error: {error}. Please reenter {direction}'s hand.")
 
     fillSpots([seat["Hand"] for seat in seats if "Hand" in seat])
 
     if "Hand" not in seats[-1]:
-        rest = remainingHand([seat["Hand"] for seat in seats[:-1] if "Hand" in seat])
+        rest = remainingHand(seats[:-1])
         if rest is not None:
             seats[-1]["Hand"] = rest
             print(f"{seats[-1]['Direction']} hand: " + ','.join(rest[suit] for suit in globals.suits))
