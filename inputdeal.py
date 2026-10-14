@@ -31,7 +31,7 @@ RANKS = "AKQJT98765432"
 SPOTS = "98765432"
 
 def sortSuit(cards: str) -> str:
-    return ''.join(sorted(cards, key=RANKS.index))
+    return ''.join(sorted(cards, key=lambda card: RANKS.find(card) if card in RANKS else len(RANKS)))
 
 def fillSpots(hands: List[dict]):
     # Replace each 'x' with a random 2-9 not held by any hand, then sort each suit A to 2.
@@ -71,12 +71,12 @@ def inputHands() -> List[dict]:
     seats = []
     for direction in globals.directions:
         name = input(f"{direction} name (or leave blank): ")
-        hand = input(f"{direction} hand (comma delimited, 'T' for 10): ")
+        hand = input(f"{direction} hand (comma delimited, 'T' or '10' for 10): ")
         seats.append({ "Direction": direction})
         if len(name) > 0:
             seats[-1]["Player"] = name
         if len(hand) > 0:
-            hand = hand.upper().replace(' ', '').replace('X', 'x')
+            hand = hand.upper().replace(' ', '').replace('10', 'T').replace('X', 'x')
             seats[-1]["Hand"] = globals.build_hand(hand.split(','))
 
     fillSpots([seat["Hand"] for seat in seats if "Hand" in seat])
